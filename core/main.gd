@@ -30,6 +30,7 @@ func _ready() -> void:
 
 	main_menu.host_requested.connect(_on_host_requested)
 	main_menu.join_requested.connect(_on_join_requested)
+	main_menu.solo_requested.connect(_on_solo_requested)
 	main_menu.quit_requested.connect(get_tree().quit)
 	pause_menu.resume_requested.connect(_close_pause_menu)
 	pause_menu.leave_requested.connect(_on_leave_requested)
@@ -39,16 +40,29 @@ func _ready() -> void:
 	NetworkManager.session_ended.connect(_on_session_ended)
 	NetworkManager.player_list_changed.connect(_refresh_status)
 
+	if not NetworkManager.networking_supported():
+		main_menu.set_network_available(false)
 	_show_main_menu("")
 	_handle_command_line.call_deferred()
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event.is_action_pressed("pause") and NetworkManager.is_in_session():
+	if not NetworkManager.is_playing():
+		return
+	if event.is_action_pressed("pause"):
 		if pause_menu.visible:
 			_close_pause_menu()
 		else:
 			_open_pause_menu()
+		get_viewport().set_input_as_handled()
+	elif (
+		event is InputEventMouseButton
+		and event.pressed
+		and not pause_menu.visible
+		and Input.mouse_mode != Input.MOUSE_MODE_CAPTURED
+	):
+		# Browsers drop mouse lock (e.g. on Esc); a click takes it back.
+		Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
 		get_viewport().set_input_as_handled()
 
 
@@ -80,6 +94,13 @@ func _on_host_requested() -> void:
 	if err != OK:
 		main_menu.set_message("Could not host on port %d (error %d). Is another copy already hosting?" % [NetworkManager.DEFAULT_PORT, err])
 		return
+	main_menu.hide()
+	change_level(FIRST_LEVEL)
+	_refresh_status()
+
+
+func _on_solo_requested() -> void:
+	NetworkManager.start_solo()
 	main_menu.hide()
 	change_level(FIRST_LEVEL)
 	_refresh_status()
@@ -146,6 +167,9 @@ func _close_pause_menu() -> void:
 
 
 func _refresh_status() -> void:
+	if NetworkManager.is_solo:
+		status_label.text = "SOLO  |  click to look around  |  Esc menu"
+		return
 	if not NetworkManager.is_in_session():
 		status_label.text = ""
 		return

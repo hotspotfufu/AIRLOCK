@@ -1,6 +1,11 @@
 # AIRLOCK — Milestone 1: Technical Foundation
 
-Four-player co-op sci-fi survival horror. Engine: **Godot 4.7.x** (Forward+).
+Four-player co-op sci-fi survival horror. Engine: **Godot 4.7.x** (Compatibility renderer, so it runs in browsers and on weaker PCs).
+
+## Browser build for itch.io
+GitHub Actions (`.github/workflows/export-web.yml`) builds the Web version on every push to `main`.
+Actions → latest run → download **airlock-web** → upload that zip to itch.io as an HTML game.
+The browser build plays **solo only** (Play Solo): browsers can't use the direct-IP multiplayer. Online browser play needs a WebRTC/WebSocket transport — a later decision.
 
 ## Open the project
 1. Install Godot **4.7.x standard** (not .NET) from godotengine.org.

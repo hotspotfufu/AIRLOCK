@@ -30,13 +30,36 @@ func _ready() -> void:
 	multiplayer.peer_disconnected.connect(_on_peer_changed)
 
 
+## True when this build can host/join online sessions. False in browser
+## (web) builds: browsers can't open the raw UDP connections ENet uses.
+## Browser multiplayer needs a WebRTC/WebSocket transport (a later decision).
+func networking_supported() -> bool:
+	return not OS.has_feature("web") and ClassDB.class_exists("ENetMultiplayerPeer")
+
+
+## Solo mode: play the level alone with no network. Used by browser builds and
+## for quick single-player testing. The game logic still runs as "host"
+## (peer id 1), so everything written for multiplayer works unchanged.
+var is_solo := false
+
+
+func start_solo() -> void:
+	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	is_solo = true
+	player_list_changed.emit()
+
+
 ## Start a session on this machine. Returns OK or an Error code.
 func host(port: int = DEFAULT_PORT) -> Error:
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_server(port, MAX_PLAYERS - 1)  # host + 3 clients
+	if not networking_supported():
+		return ERR_UNAVAILABLE
+	# Created by name so browser builds (no ENet) still load this script.
+	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: Error = peer.create_server(port, MAX_PLAYERS - 1)  # host + 3 clients
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
+	is_solo = false
 	hosting_started.emit()
 	player_list_changed.emit()
 	return OK
@@ -44,21 +67,30 @@ func host(port: int = DEFAULT_PORT) -> Error:
 
 ## Start connecting to a host. Success/failure arrives later as a signal.
 func join(address: String, port: int = DEFAULT_PORT) -> Error:
-	var peer := ENetMultiplayerPeer.new()
-	var err := peer.create_client(address, port)
+	if not networking_supported():
+		return ERR_UNAVAILABLE
+	var peer = ClassDB.instantiate("ENetMultiplayerPeer")
+	var err: Error = peer.create_client(address, port)
 	if err != OK:
 		return err
 	multiplayer.multiplayer_peer = peer
+	is_solo = false
 	return OK
 
 
-## Leave the session (host: ends it for everyone).
+## Leave the session (host: ends it for everyone) or stop solo play.
 func leave() -> void:
 	var peer := multiplayer.multiplayer_peer
 	if peer != null and not (peer is OfflineMultiplayerPeer):
 		peer.close()
 	multiplayer.multiplayer_peer = OfflineMultiplayerPeer.new()
+	is_solo = false
 	player_list_changed.emit()
+
+
+## True while in a level: online session or solo.
+func is_playing() -> bool:
+	return is_solo or is_in_session()
 
 
 func is_in_session() -> bool:
