@@ -1,73 +1,72 @@
-# AIRLOCK — Milestone 1: Technical Foundation
+# AIRLOCK
 
-Four-player co-op sci-fi survival horror. Engine: **Godot 4.7.x** (Compatibility renderer, so it runs in browsers and on weaker PCs).
+Four-player co-op sci-fi survival horror. Engine: **Godot 4.7.x**, Compatibility renderer (runs in browsers and on weaker PCs).
 
-## Browser build for itch.io
-GitHub Actions (`.github/workflows/export-web.yml`) builds the Web version on every push to `main`.
-Actions → latest run → download **airlock-web** → upload that zip to itch.io as an HTML game.
-The browser build plays **solo only** (Play Solo): browsers can't use the direct-IP multiplayer. Online browser play needs a WebRTC/WebSocket transport — a later decision.
+**Keep this repository PRIVATE.** It contains purchased Fab assets, whose licence does not allow sharing the raw files.
 
-## Open the project
-1. Install Godot **4.7.x standard** (not .NET) from godotengine.org.
-2. Project Manager → **Import** → select this folder's `project.godot`.
-3. The first open imports assets and builds the class cache (takes a few seconds).
-   If Godot asks to upgrade or reports errors, copy the **Output** panel text and send it to me.
+## Play it in the browser (itch.io)
+1. Push to `main`. GitHub Actions (`.github/workflows/export-web.yml`) builds the Web version.
+2. Actions → latest run → download **airlock-web**.
+3. Upload that zip to itch.io as an HTML game: 1280 × 720, fullscreen button on, SharedArrayBuffer off.
 
-## Test four players on one PC
-1. **Debug → Customize Run Instances…**
-2. Tick *Enable Multiple Instances*, set **4**.
-3. Instance 1 launch arguments: `--host`. Instances 2–4: `--join`.
-4. Press **F5**. Four windows open; the host starts the session and the other three connect automatically (they retry for ~5 s).
-
-Manual alternative: run normally, click **Host Game** in one window and **Join** (127.0.0.1) in the others.
-Across two PCs on the same network: join using the host's local IP. Over the internet, direct IP needs port **7777/UDP** forwarded on the host's router — Steam networking (Milestone 8) removes that need.
+The browser build is **solo with 3 AI crew**. Online 4-player works in desktop builds only (browsers block the connection type it uses).
 
 ## Controls
 | Key | Action |
 | --- | --- |
-| WASD / arrows | Move |
-| Mouse | Look |
-| Shift (forward) | Run |
-| Ctrl or C (hold) | Crouch |
-| F | Flashlight on/off |
-| Esc | Menu (Resume / Leave Session) |
-| E | Reserved for interaction (Milestone 2) |
+| WASD / arrows, mouse | Move, look |
+| Shift | Run |
+| Space | Jump · in zero-g: up / push off a wall |
+| Ctrl or C | Crouch · in zero-g: down |
+| E (press or hold) | Use: doors, levers, consoles, pick up, revive |
+| G | Put down the carried item |
+| F | Flashlight |
+| Esc | Menu |
 
-## Milestone 1 test checklist
-- [ ] 4 players spawn in Crew Quarters, facing the corridor
-- [ ] Each player sees the other three move, turn, look up/down
-- [ ] Crouch is visible on other screens; you can crouch into the maintenance crawlspace and can't stand up inside it
-- [ ] Flashlight toggles are visible on other screens
-- [ ] A 5th instance can't join (session full message)
-- [ ] A client leaving removes their astronaut for everyone; they can rejoin
-- [ ] The host leaving returns everyone to the menu with a message
+## Level 1: Restore Power
+1. Leave the medical bay: break the emergency glass by the door, pull the manual release.
+2. Find 2 power cells (their places change every run) and fit them to the generator in Engineering (west).
+3. Two crew hold both main breakers at once. Solo: hold one, an AI crew member takes the other.
+4. Restart air circulation at Life Support (Engineering side room).
+5. Restore communications in the Control Room (east end of the medical bay).
+Optional: cycle the service tunnel airlock (south), float through the zero-g tunnel, inspect the impact-zone bulkhead.
 
-## How the pieces connect
+Oxygen falls and CO2 rises until step 4. Below 16 % oxygen helmets seal and you live on suit oxygen; refill at the green O2 cabinets (3 uses each).
+
+## What is real, what is placeholder
+**Working and tested** (scripted playthrough of every step, plus a 2-player host/client test, plus the browser build loading the level):
+station built from the purchased models with collision; four astronauts; weighted first-person movement, jump, crouch, zero-g; flashlight battery; interaction system; AIRLOCK doors with emergency glass and manual release; powered doors; a two-door airlock; power cells, generator, two-person breakers; life support and atmosphere; suit oxygen, health, going down and reviving; AI crew that follow, take the second breaker, revive (one medkit each) and call out power cells; objectives; HUD; emergency/main lighting; multiplayer sync of all of it through `StationState`.
+
+**Placeholder / simplified:**
+- Astronaut animation is code-driven: the purchased model has no skeleton, so it is cut into 7 rigid parts. Replace with a Mixamo-rigged model later.
+- The nanite swarm is drawn from code and only appears as scripted/random glimpses. No alien AI, no attacks, no hosts yet (Phase 4).
+- All sounds are synthesised stand-ins (`tools/make_audio.py`). Never listened to on real speakers.
+- Crew names are "CREW 1-4". AI crew do not use oxygen, carry items, or enter zero-g.
+- Engineering model and Moon Base arrived without textures; they are tinted flat colours.
+- Not built: keypads/keycards, inventory beyond one carried item, proximity voice, Steam, stairs/ramps (the models have none).
+
+## Project map
 ```
-core/main.tscn  (persistent)            multiplayer/network_manager.gd (autoload)
- ├─ Level  ← LevelSpawner copies the     host() / join() / leave(), session signals
- │          host's level to clients     core/input_setup.gd (autoload)
- │   └─ levels/test_ship/test_ship.tscn  all key bindings
- │        ├─ SpawnPoints (4 markers)
- │        ├─ Players ← PlayerSpawner (levels/level.gd spawns 1 astronaut per peer)
- │        │    └─ characters/astronaut/player.tscn
- │        │         ├─ player.gd: first-person controller (owner's machine only)
- │        │         └─ MultiplayerSynchronizer: position, facing, pitch, crouch, flashlight
- └─ UI: MainMenu, PauseMenu, StatusLabel
+core/            main scene, input bindings, Sfx sound manager
+multiplayer/     NetworkManager (host/join/solo)
+characters/astronaut/   player.gd (Astronaut), astronaut_visual.gd, bot_brain.gd, revive_point.gd
+systems/state/   StationState: the shared table every system reads and writes
+systems/interaction/  Interactable base, consoles, O2/med stations, inspect points
+systems/doors/   AirlockDoor, door button, emergency release, AirlockChamber
+systems/power/   generator sockets, breakers        systems/items/  power cell
+systems/atmosphere/  station air                    systems/lighting/  main/emergency lights
+systems/zones/   vacuum, zero-g, hazard, trigger zones, sparks
+alien/swarm/     swarm visual + glimpse director
+levels/level.gd  spawning, AI crew, player requests  levels/station/  Level 1 rules + generated scene
+ui/              title screen, pause menu, HUD
+environments/    model wrapper, build kit (AIRLOCK colours/logo), star sky
+assets/          models (optimised), audio, title art
+tools/           DEV ONLY: build_station.gd (generates the level), make_audio.py, pipeline/ (model optimiser)
 ```
+`levels/station/station.tscn` is **generated**. Change the layout in `tools/build_station.gd` and run
+`godot --headless --path . -s tools/build_station.gd` rather than editing the scene by hand.
+See `docs/ASSET_PIPELINE.md` for how the purchased models were shrunk and how collision is made.
 
-## What is real vs placeholder (Milestone 1)
-**Implemented:** host/join/leave over ENet (direct IP), 4-player cap, level replication (late joiners get the level), player spawning/despawning, first-person walk/run/crouch/look, headroom check, synced flashlight, pause menu, auto host/join launch args, folder structure, physics/render layer names.
-
-**Placeholder:** astronaut is a capsule with a visor; level is greybox CSG; menu is plain text; no audio; remote players snap to network updates without interpolation (fine on LAN, smoothing comes later).
-
-**Not implemented yet:** Steam (see below), interaction, doors, power, oxygen, alien, voice chat, damage/revive.
-
-**Not yet run in Godot by me** — this code was written without access to the engine. Expect a round of small fixes on first open.
-
-## Steam (prepared, not connected)
-Plan for Milestone 8 (earlier if you want to test online with friends):
-1. Install the **GodotSteam GDExtension** matching your Godot version into `addons/` (Godot Asset Library → "GodotSteam GDExtension").
-2. Add a `SteamTransport` in `multiplayer/transports/` using `SteamMultiplayerPeer`; `NetworkManager.host()/join()` switch to it. Nothing else changes.
-3. For development, create `steam_appid.txt` containing `480` (Valve's test app) next to the executable. Your real App ID comes after paying the Steam Direct fee.
-4. Export: Project → Export → add **Windows Desktop** (and **Linux** for Steam Deck) presets; install export templates when prompted.
+## Desktop multiplayer test
+Debug → Customize Run Instances → 4 instances, first with `--host`, the rest with `--join`, then F5.
+Direct IP only for now (port 7777/UDP); Steam networking is planned for the polish phase.

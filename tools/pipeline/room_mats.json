@@ -1,0 +1,7 @@
+{"wall_01":{"pbrMetallicRoughness":{"baseColorFactor":[0.42,0.47,0.53,1],"metallicFactor":0.6,"roughnessFactor":0.45}},
+ "wall_02":{"pbrMetallicRoughness":{"baseColorFactor":[0.25,0.28,0.33,1],"metallicFactor":0.7,"roughnessFactor":0.4}},
+ "Prop_01":{"pbrMetallicRoughness":{"baseColorFactor":[0.32,0.36,0.33,1],"metallicFactor":0.5,"roughnessFactor":0.5}},
+ "MI_Chair_01":{"pbrMetallicRoughness":{"baseColorFactor":[0.13,0.14,0.17,1],"metallicFactor":0.1,"roughnessFactor":0.7}},
+ "Ceiling_01":{"pbrMetallicRoughness":{"baseColorFactor":[0.46,0.49,0.53,1],"metallicFactor":0.5,"roughnessFactor":0.5}},
+ "Ceiling_02":{"pbrMetallicRoughness":{"baseColorFactor":[0.33,0.36,0.4,1],"metallicFactor":0.5,"roughnessFactor":0.5}},
+ "MI_Floor_01":{"pbrMetallicRoughness":{"baseColorFactor":[0.17,0.18,0.21,1],"metallicFactor":0.5,"roughnessFactor":0.55}}}
