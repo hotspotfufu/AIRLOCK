@@ -39,6 +39,10 @@ func _ready() -> void:
 	var junction := get_node_or_null("Geometry/Junction")
 	if junction != null:
 		for mi: MeshInstance3D in junction.find_children("fan_*", "MeshInstance3D", true, false):
+			# Only the blades spin. The "fan_casing" parts are the big housings
+			# that span the corridor; spinning those swung them through the hallway.
+			if String(mi.name).begins_with("fan_casing"):
+				continue
 			var s := mi.get_aabb().size
 			var axis := Vector3.RIGHT
 			if s.y <= s.x and s.y <= s.z:
