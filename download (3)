@@ -1,0 +1,7 @@
+# Godot 4 generated files
+.godot/
+*.uid
+export/
+*.tmp
+# Steam dev file (keep local)
+steam_appid.txt
