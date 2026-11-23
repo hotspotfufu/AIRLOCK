@@ -30,7 +30,7 @@ func _ready() -> void:
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_font = ThemeDB.fallback_font
 	_breath = AudioStreamPlayer.new()
-	_breath.volume_db = -16.0
+	_breath.volume_db = -22.0
 	add_child(_breath)
 
 

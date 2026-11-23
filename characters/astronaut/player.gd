@@ -268,7 +268,6 @@ func _simulate_walking(delta: float, wish: Vector3, want_sprint: bool, want_crou
 
 	if is_on_floor() and not _was_on_floor:
 		_land_dip = 0.09
-		Sfx.play_at("step", global_position, -4.0)
 	_was_on_floor = is_on_floor()
 
 
@@ -433,8 +432,9 @@ func _update_camera_feel(delta: float) -> void:
 
 
 func _on_footstep() -> void:
-	if is_on_floor() or not is_multiplayer_authority():
-		Sfx.play_at("step", global_position, -9.0 if is_crouching else -3.0)
+	# Footstep sounds are switched off (players found them loud and distracting).
+	# Drop a recorded step sound into assets/audio/sfx/step.wav and re-enable here.
+	pass
 
 
 # --- Interaction (local human) --------------------------------------------------

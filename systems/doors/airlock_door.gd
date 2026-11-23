@@ -159,7 +159,11 @@ func _build_plate(steel: Material, dark: Material, green: Material, half_open: f
 		if (side > 0 and not sign_side_a) or (side < 0 and not sign_side_b):
 			continue
 		var holder := Node3D.new()
-		holder.position = Vector3(0, opening.y + 0.42, side * (thickness * 0.5 + 0.03))
+		# The sign hangs just inside the top of the doorway, in front of the
+		# door leaves. The doorway is always clear, so no model trim can cover
+		# it (above the opening it was half hidden by ceiling frames).
+		holder.position = Vector3(0, opening.y - 0.5, side * (thickness * 0.5 + 0.32))
+		holder.scale = Vector3.ONE * 0.8
 		if side < 0:
 			holder.rotation.y = PI
 		add_child(holder)
@@ -235,7 +239,9 @@ func _build_door(dark: Material, half_open: float) -> void:
 			box.set_script(ReleaseBoxScript)
 			box.set("door", self)
 			box.set("side_name", "a" if side > 0 else "b")
-			box.position = Vector3(side * (half_open + 1.15), 1.35, side * (thickness * 0.5 + 0.02))
+			# Right beside the doorway and slightly proud of the wall, so the
+			# box and its label are never buried in model trim.
+			box.position = Vector3(side * (half_open + 0.42), 1.35, side * (thickness * 0.5 + 0.18))
 			if side < 0:
 				box.rotation.y = PI
 			add_child(box)

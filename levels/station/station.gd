@@ -47,7 +47,7 @@ func _ready() -> void:
 				axis = Vector3.BACK
 			_fans.append(mi)
 			_fan_axes.append(axis)
-	_start_ambience()
+	# Background hum removed: players heard it as static.
 
 
 func _level_started() -> void:
@@ -197,7 +197,7 @@ func _update_alarm(delta: float) -> void:
 
 @rpc("authority", "call_local", "unreliable")
 func _alarm() -> void:
-	Sfx.play_at("alarm", Vector3(0, 3, 0), -8.0)
+	Sfx.play_ui("alarm", -18.0)
 
 
 func _on_state_changed(key: String, value: Variant) -> void:
@@ -280,6 +280,6 @@ func _start_ambience() -> void:
 	stream.loop_end = int(stream.get_length() * stream.mix_rate)
 	var p := AudioStreamPlayer.new()
 	p.stream = stream
-	p.volume_db = -14.0
+	p.volume_db = -20.0
 	add_child(p)
 	p.play()

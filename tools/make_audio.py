@@ -5,7 +5,11 @@ import numpy as np, wave, os
 SR = 22050
 rng = np.random.default_rng(7)
 def save(path, x):
-    x = np.clip(x / max(1e-9, np.abs(x).max()) * 0.85, -1, 1)
+    x = np.asarray(x, float)
+    f = min(len(x)//4, int(0.004*SR))
+    if f > 0 and not path.endswith(('hum.wav','breath.wav')):
+        x[:f] *= np.linspace(0,1,f); x[-f:] *= np.linspace(1,0,f)
+    x = np.clip(x / max(1e-9, np.abs(x).max()) * 0.8, -1, 1)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with wave.open(path, 'wb') as w:
         w.setnchannels(1); w.setsampwidth(2); w.setframerate(SR)
@@ -24,7 +28,7 @@ def env(n, attack, decay):
 S = 'assets/audio/sfx/'
 # metal footstep: low thud + short metallic ring
 x = t(0.22); n = len(x)
-save(S + 'step.wav', lowpass(noise(0.22), 0.12) * env(n, 0.002, 0.035) * 1.5 + np.sin(2*np.pi*410*x) * env(n, 0.001, 0.05) * 0.25 + np.sin(2*np.pi*95*x) * env(n, 0.002, 0.06))
+save(S + 'step.wav', lowpass(noise(0.22), 0.05) * env(n, 0.002, 0.02) * 0.6 + np.sin(2*np.pi*310*x) * env(n, 0.001, 0.04) * 0.12 + np.sin(2*np.pi*80*x) * env(n, 0.003, 0.07))
 x = t(0.05); save(S + 'click.wav', noise(0.05) * env(len(x), 0.0005, 0.006) + np.sin(2*np.pi*2100*x) * env(len(x), 0.0005, 0.01))
 # door: servo whirr rising then clunk
 x = t(1.4); n = len(x)
@@ -33,9 +37,9 @@ whirr *= np.minimum(1, x/0.08) * (x < 1.15)
 clunk = np.zeros(n); k = int(1.15*SR); m = n - k
 clunk[k:] = (np.sin(2*np.pi*70*t(m/SR)[:m]) + lowpass(noise(m/SR)[:m], 0.3)) * env(m, 0.001, 0.05)
 save(S + 'door.wav', whirr + clunk * 1.6)
-x = t(1.2); save(S + 'alarm.wav', np.sign(np.sin(2*np.pi*620*x)) * 0.3 * (np.sin(2*np.pi*2.5*x) > 0) * np.sin(2*np.pi*620*x)**2 + np.sin(2*np.pi*620*x) * (np.sin(2*np.pi*2.5*x) > 0) * 0.5)
+x = t(1.2); tone = np.where((x % 0.6) < 0.3, np.sin(2*np.pi*660*x), np.sin(2*np.pi*520*x)); save(S + 'alarm.wav', tone * np.minimum(1, (x % 0.3)/0.02) * np.minimum(1, (0.3 - x % 0.3)/0.03) * np.exp(-x/2.0))
 x = t(0.28); save(S + 'confirm.wav', (np.sin(2*np.pi*880*x) * (x < 0.12) + np.sin(2*np.pi*1320*x) * (x >= 0.12)) * env(len(x), 0.003, 0.12))
-x = t(0.25); save(S + 'deny.wav', np.sign(np.sin(2*np.pi*150*x)) * env(len(x), 0.003, 0.12))
+x = t(0.25); save(S + 'deny.wav', (np.sin(2*np.pi*220*x) + 0.3*np.sin(2*np.pi*330*x)) * env(len(x), 0.004, 0.1))
 x = t(0.6); n = len(x)
 g = np.zeros(n)
 for _ in range(26):
@@ -57,8 +61,11 @@ x = t(0.3); save(S + 'hurt.wav', lowpass(noise(0.3), 0.08) * env(len(x), 0.002, 
 x = t(4.0); br = lowpass(noise(4.0), 0.07) - lowpass(noise(4.0), 0.02)
 shape = np.maximum(0, np.sin(2*np.pi*x/4.0)) ** 1.5 + 0.7 * np.maximum(0, -np.sin(2*np.pi*x/4.0)) ** 2
 save(S + 'breath.wav', br * shape)
-# station hum loop (6 s, whole number of cycles so it loops cleanly)
-x = t(6.0); hum = np.sin(2*np.pi*50*x) * 0.5 + np.sin(2*np.pi*100*x) * 0.25 + np.sin(2*np.pi*150.5*x) * 0.1
-rum = lowpass(noise(6.0), 0.01); rum = rum * np.minimum(1, x/0.5) * np.minimum(1, (6.0-x)/0.5)
-save('assets/audio/ambience/hum.wav', hum * (0.8 + 0.2*np.sin(2*np.pi*x/6.0)) + rum * 6)
+# station hum loop (6 s). Pure tones only: an earlier version mixed in filtered
+# noise, which players heard as constant static. Whole cycles so it loops cleanly.
+x = t(6.0)
+hum = (np.sin(2*np.pi*55*x) * 0.55 + np.sin(2*np.pi*110*x) * 0.22 + np.sin(2*np.pi*165*x) * 0.06
+       + np.sin(2*np.pi*82.5*x) * 0.12 * (0.5 + 0.5*np.sin(2*np.pi*x/3.0)))
+hum *= 0.85 + 0.15*np.sin(2*np.pi*x/6.0)
+save('assets/audio/ambience/hum.wav', hum)
 print('audio written')

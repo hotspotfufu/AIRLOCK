@@ -155,12 +155,12 @@ func _environment() -> void:
 
 # --- purchased models ---------------------------------------------------------------
 
-func _model(parent: Node3D, node_name: String, file: String, xf: Transform3D, remove := "", tint := Color.WHITE) -> Node3D:
+func _model(parent: Node3D, node_name: String, file: String, xf: Transform3D, remove := "", skin := "") -> Node3D:
 	var holder := Node3D.new()
 	holder.name = node_name
 	holder.set_script(ModelSetupS)
 	holder.remove_nodes = remove
-	holder.tint = tint
+	holder.skin = skin
 	holder.transform = xf
 	parent.add_child(holder)
 	var inst: Node3D = load(MODELS + file).instantiate()
@@ -175,9 +175,9 @@ func _geometry() -> Node3D:
 	_model(geo, "Junction", "junction.glb", Transform3D.IDENTITY)
 	# East: medical bay + control room ("Moon Base").
 	_model(geo, "Medbay", "moon_base.fbx", _xf(Vector3(24.74, 0, -5.03)),
-		"DM_Gate_01_001", Color(0.62, 0.66, 0.7))
+		"DM_Gate_01_001", "moon_base")
 	# West: engineering ("Sci-Fi Space Station Corridor" interior).
-	_model(geo, "Engineering", "room_interior.glb", _xf(Vector3(-31.38, 0, 8.18), 90.0), "", Color(0.55, 0.57, 0.6))
+	_model(geo, "Engineering", "room_interior.glb", _xf(Vector3(-31.38, 0, 8.18), 90.0), "", "engineering")
 	# South: service tunnel (airlock chamber, then zero-g and vacuum).
 	_model(geo, "Tunnel", "tunnel.glb",
 		Transform3D(Basis.from_scale(Vector3(-1.3, 1, -0.3)), Vector3(0, 0, 17.74)))
